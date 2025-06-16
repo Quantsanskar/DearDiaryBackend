@@ -17,7 +17,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 github_token = os.environ.get('GITHUB_TOKEN')
 if github_token:
-    subprocess.run(['git', 'config', '--global', 'url.https://${GITHUB_TOKEN}@github.com/.insteadOf', 'https://github.com/'], cwd=BASE_DIR)
+    # Configure Git to use the token for authentication
+    subprocess.run(['git', 'config', '--global', 'credential.helper', 'store'], cwd=BASE_DIR)
+    # Set up the URL with token
+    subprocess.run(['git', 'config', '--global', 'url.https://' + github_token + '@github.com/.insteadOf', 'https://github.com/'], cwd=BASE_DIR)
 
 # Try to restore the database on startup
 restore_database()
