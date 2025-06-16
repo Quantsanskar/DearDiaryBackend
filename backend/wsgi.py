@@ -15,7 +15,7 @@ from pathlib import Path
 
 # Configure Git to use token
 BASE_DIR = Path(__file__).resolve().parent.parent
-github_token = os.environ.get('GITHUB_TOKEN')
+github_token = os.environ.get('deardiarydbbackup')
 if github_token:
     # Configure Git to use the token for authentication
     subprocess.run(['git', 'config', '--global', 'credential.helper', 'store'], cwd=BASE_DIR)
