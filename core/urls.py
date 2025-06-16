@@ -5,8 +5,8 @@ from django.http import HttpResponse
 
 def backup_db(request):
     # Accept both GET and POST requests
-    call_command('backup_db')
-    return HttpResponse('Database backup initiated successfully')
+    result = call_command('backup_db')
+    return HttpResponse(result)
 
 urlpatterns = [
     path('', views.index, name='index'),
