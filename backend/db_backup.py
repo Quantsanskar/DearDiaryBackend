@@ -16,6 +16,12 @@ def setup_git():
     if 'origin' not in result.stdout:
         subprocess.run(['git', 'remote', 'add', 'origin', 'https://github.com/Quantsanskar/DearDiaryBackend.git'], cwd=BASE_DIR)
 
+def verify_git_status():
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    status = subprocess.run(['git', 'status'], cwd=BASE_DIR, capture_output=True, text=True)
+    branch = subprocess.run(['git', 'branch', '--show-current'], cwd=BASE_DIR, capture_output=True, text=True)
+    return f"Current Branch: {branch.stdout.strip()}\nStatus: {status.stdout}"
+
 def backup_database():
     # Get the base directory
     BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,6 +40,9 @@ def backup_database():
     shutil.copy2(db_file, backup_file)
     
     try:
+        # Initial status check
+        initial_status = verify_git_status()
+        
         # Check if we're in a git repository
         git_status = subprocess.run(['git', 'status'], cwd=BASE_DIR, capture_output=True, text=True)
         if 'fatal: not a git repository' in git_status.stderr:
@@ -57,9 +66,26 @@ def backup_database():
         # Force push to main branch
         push_result = subprocess.run(['git', 'push', '-f', 'origin', 'main'], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
+        # Final status check
+        final_status = verify_git_status()
+        
         # Return success message with GitHub URL
         repo_url = 'https://github.com/Quantsanskar/DearDiaryBackend'
-        return f'Successfully backed up database to {backup_file} and pushed to GitHub: {repo_url}\nGit Status: {git_status.stdout}\nAdd Result: {add_result.stdout}\nCommit Result: {commit_result.stdout}\nPush Result: {push_result.stdout}'
+        return f'''Backup Status Report:
+1. Initial Git Status:
+{initial_status}
+
+2. Backup File Created: {backup_file}
+
+3. Git Operations:
+Add Result: {add_result.stdout}
+Commit Result: {commit_result.stdout}
+Push Result: {push_result.stdout}
+
+4. Final Git Status:
+{final_status}
+
+5. GitHub Repository: {repo_url}'''
     except subprocess.CalledProcessError as e:
         return f'Error in Git operation: {e.stderr}\nCommand: {e.cmd}\nReturn code: {e.returncode}'
 
