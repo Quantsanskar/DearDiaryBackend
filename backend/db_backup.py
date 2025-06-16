@@ -42,6 +42,11 @@ def backup_database():
             subprocess.run(['git', 'add', '.'], cwd=BASE_DIR, check=True)
             subprocess.run(['git', 'commit', '-m', 'Initial commit'], cwd=BASE_DIR, check=True)
         
+        # Check if we're in detached HEAD state
+        if 'HEAD detached' in git_status.stdout:
+            # Create and switch to main branch
+            subprocess.run(['git', 'checkout', '-b', 'main'], cwd=BASE_DIR, check=True)
+        
         # Add the backup file to git
         add_result = subprocess.run(['git', 'add', str(backup_file)], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
@@ -49,8 +54,8 @@ def backup_database():
         commit_message = f'Database backup {timestamp}'
         commit_result = subprocess.run(['git', 'commit', '-m', commit_message], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
-        # Push to GitHub
-        push_result = subprocess.run(['git', 'push', '-u', 'origin', 'main'], cwd=BASE_DIR, capture_output=True, text=True, check=True)
+        # Force push to main branch
+        push_result = subprocess.run(['git', 'push', '-f', 'origin', 'main'], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
         # Return success message with GitHub URL
         repo_url = 'https://github.com/Quantsanskar/DearDiaryBackend'
