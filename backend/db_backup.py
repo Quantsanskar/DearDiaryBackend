@@ -22,12 +22,44 @@ def verify_git_status():
     branch = subprocess.run(['git', 'branch', '--show-current'], cwd=BASE_DIR, capture_output=True, text=True)
     return f"Current Branch: {branch.stdout.strip()}\nStatus: {status.stdout}"
 
+def cleanup_old_backups():
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    backup_files = sorted(BASE_DIR.glob('db_backup_*.sqlite3'))
+    
+    # Keep only the latest backup
+    if len(backup_files) > 1:
+        for old_backup in backup_files[:-1]:
+            try:
+                old_backup.unlink()
+                print(f"Deleted old backup: {old_backup.name}")
+            except Exception as e:
+                print(f"Error deleting {old_backup.name}: {e}")
+
+def restore_database():
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    
+    # Get all backup files
+    backup_files = sorted(BASE_DIR.glob('db_backup_*.sqlite3'))
+    if not backup_files:
+        return False, "No backup files found"
+    
+    # Get the most recent backup
+    latest_backup = backup_files[-1]
+    db_file = BASE_DIR / 'db.sqlite3'
+    
+    # Restore the database
+    shutil.copy2(latest_backup, db_file)
+    return True, f"Restored from {latest_backup.name}"
+
 def backup_database():
     # Get the base directory
     BASE_DIR = Path(__file__).resolve().parent.parent
     
     # Setup Git configuration
     setup_git()
+    
+    # First, restore the latest backup
+    restore_success, restore_message = restore_database()
     
     # Database file path
     db_file = BASE_DIR / 'db.sqlite3'
@@ -61,6 +93,9 @@ def backup_database():
             else:
                 subprocess.run(['git', 'checkout', '-b', 'main'], cwd=BASE_DIR, check=True)
         
+        # Clean up old backups
+        cleanup_old_backups()
+        
         # Add the backup file to git (use only the filename)
         add_result = subprocess.run(['git', 'add', backup_file.name], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
@@ -80,35 +115,22 @@ def backup_database():
 1. Initial Git Status:
 {initial_status}
 
-2. Backup File Created: {backup_file}
+2. Restore Status:
+{restore_message}
 
-3. Git Operations:
+3. Backup File Created: {backup_file}
+
+4. Git Operations:
 Add Result: {add_result.stdout}
 Commit Result: {commit_result.stdout}
 Push Result: {push_result.stdout}
 
-4. Final Git Status:
+5. Final Git Status:
 {final_status}
 
-5. GitHub Repository: {repo_url}'''
+6. GitHub Repository: {repo_url}'''
     except subprocess.CalledProcessError as e:
         return f'Error in Git operation: {e.stderr}\nCommand: {e.cmd}\nReturn code: {e.returncode}'
-
-def restore_database():
-    BASE_DIR = Path(__file__).resolve().parent.parent
-    
-    # Get all backup files
-    backup_files = sorted(BASE_DIR.glob('db_backup_*.sqlite3'))
-    if not backup_files:
-        return False
-    
-    # Get the most recent backup
-    latest_backup = backup_files[-1]
-    db_file = BASE_DIR / 'db.sqlite3'
-    
-    # Restore the database
-    shutil.copy2(latest_backup, db_file)
-    return True
 
 if __name__ == '__main__':
     backup_database() 
