@@ -133,4 +133,4 @@ Push Result: {push_result.stdout}
         return f'Error in Git operation: {e.stderr}\nCommand: {e.cmd}\nReturn code: {e.returncode}'
 
 if __name__ == '__main__':
-    backup_database() 
+    backup_database()
