@@ -53,8 +53,12 @@ def backup_database():
         
         # Check if we're in detached HEAD state
         if 'HEAD detached' in git_status.stdout:
-            # Create and switch to main branch
-            subprocess.run(['git', 'checkout', '-b', 'main'], cwd=BASE_DIR, check=True)
+            # Check if 'main' branch exists
+            branch_list = subprocess.run(['git', 'branch'], cwd=BASE_DIR, capture_output=True, text=True)
+            if 'main' in branch_list.stdout:
+                subprocess.run(['git', 'checkout', 'main'], cwd=BASE_DIR, check=True)
+            else:
+                subprocess.run(['git', 'checkout', '-b', 'main'], cwd=BASE_DIR, check=True)
         
         # Add the backup file to git
         add_result = subprocess.run(['git', 'add', str(backup_file)], cwd=BASE_DIR, capture_output=True, text=True, check=True)
