@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Diary, Entry, Reaction, ReadStatus
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+import pytz
 
 User = get_user_model()
 
@@ -26,6 +28,14 @@ class EntrySerializer(serializers.ModelSerializer):
                  'created_at', 'updated_at', 'author_name', 'reactions', 
                  'reaction_counts', 'is_unlocked', 'is_read')
         read_only_fields = ('id', 'created_at', 'updated_at')
+    
+    def validate_unlock_at(self, value):
+        if value:
+            # Ensure the unlock_at time is timezone-aware
+            if timezone.is_naive(value):
+                ist = pytz.timezone('Asia/Kolkata')
+                value = ist.localize(value)
+        return value
     
     def get_reaction_counts(self, obj):
         reactions = obj.reactions.all()

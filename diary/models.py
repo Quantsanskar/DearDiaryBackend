@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+import pytz
 
 User = get_user_model()
 
@@ -42,11 +43,19 @@ class Entry(models.Model):
     def __str__(self):
         return f"{self.title or 'Entry'} by {self.author.username}"
     
+    def save(self, *args, **kwargs):
+        # Convert unlock_at to Asia/Kolkata timezone if it's provided
+        if self.unlock_at and timezone.is_naive(self.unlock_at):
+            ist = pytz.timezone('Asia/Kolkata')
+            self.unlock_at = ist.localize(self.unlock_at)
+        super().save(*args, **kwargs)
+    
     @property
     def is_unlocked(self):
         if not self.is_timed:
             return True
-        return timezone.now() >= self.unlock_at if self.unlock_at else True
+        now = timezone.now()
+        return now >= self.unlock_at if self.unlock_at else True
 
 class Reaction(models.Model):
     """Reaction model for entries"""
