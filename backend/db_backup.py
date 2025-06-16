@@ -4,9 +4,25 @@ from datetime import datetime
 import subprocess
 from pathlib import Path
 
+def setup_git():
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    
+    # Configure Git
+    subprocess.run(['git', 'config', '--global', 'user.email', 'sanskarsrdav@gmail.com'], cwd=BASE_DIR)
+    subprocess.run(['git', 'config', '--global', 'user.name', 'Quantsanskar'], cwd=BASE_DIR)
+    
+    # Set up remote if not exists
+    result = subprocess.run(['git', 'remote', '-v'], cwd=BASE_DIR, capture_output=True, text=True)
+    if 'origin' not in result.stdout:
+        # Replace with your actual GitHub repository URL
+        subprocess.run(['git', 'remote', 'add', 'origin', 'https://github.com/Quantsanskar/DearDiaryBackend.git'], cwd=BASE_DIR)
+
 def backup_database():
     # Get the base directory
     BASE_DIR = Path(__file__).resolve().parent.parent
+    
+    # Setup Git configuration
+    setup_git()
     
     # Database file path
     db_file = BASE_DIR / 'db.sqlite3'
