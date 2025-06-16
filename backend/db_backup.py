@@ -34,21 +34,29 @@ def backup_database():
     shutil.copy2(db_file, backup_file)
     
     try:
+        # Check if we're in a git repository
+        git_status = subprocess.run(['git', 'status'], cwd=BASE_DIR, capture_output=True, text=True)
+        if 'fatal: not a git repository' in git_status.stderr:
+            # Initialize git repository
+            subprocess.run(['git', 'init'], cwd=BASE_DIR, check=True)
+            subprocess.run(['git', 'add', '.'], cwd=BASE_DIR, check=True)
+            subprocess.run(['git', 'commit', '-m', 'Initial commit'], cwd=BASE_DIR, check=True)
+        
         # Add the backup file to git
-        subprocess.run(['git', 'add', str(backup_file)], cwd=BASE_DIR, check=True)
+        add_result = subprocess.run(['git', 'add', str(backup_file)], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
         # Commit the changes
         commit_message = f'Database backup {timestamp}'
-        subprocess.run(['git', 'commit', '-m', commit_message], cwd=BASE_DIR, check=True)
+        commit_result = subprocess.run(['git', 'commit', '-m', commit_message], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
         # Push to GitHub
-        push_result = subprocess.run(['git', 'push', 'origin', 'main'], cwd=BASE_DIR, capture_output=True, text=True, check=True)
+        push_result = subprocess.run(['git', 'push', '-u', 'origin', 'main'], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
         # Return success message with GitHub URL
         repo_url = 'https://github.com/Quantsanskar/DearDiaryBackend'
-        return f'Successfully backed up database to {backup_file} and pushed to GitHub: {repo_url}'
+        return f'Successfully backed up database to {backup_file} and pushed to GitHub: {repo_url}\nGit Status: {git_status.stdout}\nAdd Result: {add_result.stdout}\nCommit Result: {commit_result.stdout}\nPush Result: {push_result.stdout}'
     except subprocess.CalledProcessError as e:
-        return f'Error pushing to GitHub: {e.stderr}'
+        return f'Error in Git operation: {e.stderr}\nCommand: {e.cmd}\nReturn code: {e.returncode}'
 
 def restore_database():
     BASE_DIR = Path(__file__).resolve().parent.parent
