@@ -38,6 +38,7 @@ def backup_database():
     
     # Copy the database file
     shutil.copy2(db_file, backup_file)
+    assert backup_file.exists(), f"Backup file {backup_file} does not exist!"
     
     try:
         # Initial status check
@@ -60,8 +61,8 @@ def backup_database():
             else:
                 subprocess.run(['git', 'checkout', '-b', 'main'], cwd=BASE_DIR, check=True)
         
-        # Add the backup file to git
-        add_result = subprocess.run(['git', 'add', str(backup_file)], cwd=BASE_DIR, capture_output=True, text=True, check=True)
+        # Add the backup file to git (use only the filename)
+        add_result = subprocess.run(['git', 'add', backup_file.name], cwd=BASE_DIR, capture_output=True, text=True, check=True)
         
         # Commit the changes
         commit_message = f'Database backup {timestamp}'
